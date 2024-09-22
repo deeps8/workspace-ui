@@ -1,8 +1,9 @@
 import { WorkspaceType } from "@/types/workspace";
-import { Link, Plus, Ellipsis } from "lucide-react";
+import { Plus, Ellipsis } from "lucide-react";
 import { Button } from "../ui/button";
 import { CardTitle, CardDescription, Card, CardHeader, CardFooter } from "../ui/card";
 import { UserAvatarList, UserAvatar } from "../ui/user-avatar";
+import Link from "next/link";
 
 export function WorkspaceHeader() {
   return (
