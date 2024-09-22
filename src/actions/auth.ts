@@ -15,8 +15,8 @@ export async function MySession() {
     },
   });
   //   console.log({ res: await res.json() });
+  console.log({ res: cookies().toString() });
   if (!res.ok) {
-    console.log({ res, msg: "wrong api call" });
     return null;
   }
   return res.json();
