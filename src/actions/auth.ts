@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 export async function MySession() {
   const sessionId = cookies().get("session")?.value ?? null;
   if (!sessionId) {
+    console.log({ msg: "Session ID not found" });
     return null;
   }
 
@@ -14,6 +15,9 @@ export async function MySession() {
     },
   });
   //   console.log({ res: await res.json() });
-  if (!res.ok) return null;
+  if (!res.ok) {
+    console.log({ res, msg: "wrong api call" });
+    return null;
+  }
   return res.json();
 }
