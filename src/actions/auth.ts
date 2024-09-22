@@ -7,15 +7,16 @@ export async function MySession() {
     return null;
   }
 
+  console.log({ sessionId });
   const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_PATH}/api/session`, {
     credentials: "include",
     method: "GET",
     headers: {
-      Cookie: cookies().toString(),
+      Cookie: `session=${sessionId}`,
     },
   });
   //   console.log({ res: await res.json() });
-  console.log({ res: cookies().toString() });
+  console.log({ cookies: `session=${sessionId}`, res: res.url });
   if (!res.ok) {
     return null;
   }
