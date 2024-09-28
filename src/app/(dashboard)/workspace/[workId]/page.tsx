@@ -27,7 +27,7 @@ export default function Page({ params }: { params: { workId: string } }) {
                   Created on - {new Date(TempWorkspace.created_at).toLocaleDateString("en-US", { dateStyle: "medium" })}
                 </span>
                 <div>
-                  <MemberListDialog
+                  {/* <MemberListDialog
                     members={TempWorkspace.members}
                     ownerId={TempWorkspace.owner}
                     dialogTrigger={
@@ -35,7 +35,7 @@ export default function Page({ params }: { params: { workId: string } }) {
                         {TempWorkspace.members.length} Members
                       </button>
                     }
-                  />
+                  /> */}
                 </div>
               </div>
             </div>
