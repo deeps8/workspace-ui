@@ -8,49 +8,43 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ChangeEvent, useCallback, useRef, useState } from "react";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Check, CircleX, XIcon } from "lucide-react";
+import { ChangeEvent, useCallback, useState } from "react";
+import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
+import { Check, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const languages = [
-  { label: "English", value: "en" },
-  { label: "French", value: "fr" },
-  { label: "German", value: "de" },
-  { label: "Spanish", value: "es" },
-  { label: "Portuguese", value: "pt" },
-  { label: "Russian", value: "ru" },
-  { label: "Japanese", value: "ja" },
-  { label: "Korean", value: "ko" },
-  { label: "Chinese", value: "zh" },
-];
+import { NewWorkspace } from "@/actions/workspace";
+import { useToast } from "@/hooks/use-toast";
+import { ToastAction } from "@/components/ui/toast";
 
 const MemberSchema = z.object({
   label: z.string(),
-  value: z.string(),
+  value: z.object({ id: z.string(), email: z.string().email() }),
 });
 
 const WorkspaceSchema = z.object({
-  title: z.string().min(1, { message: "required" }).max(20, { message: "Title can only have 20 characters." }),
-  description: z
+  name: z.string().min(1, { message: "required" }).max(20, { message: "Title can only have 20 characters." }),
+  overview: z
     .string()
     .min(1, { message: "Required" })
     .max(100, { message: "Description can only have 100 characters." }),
-  members: z.array(MemberSchema),
+  members: z.array(MemberSchema).min(1, { message: "There should be atleast one member added." }),
 });
 
-type WorkspaceSchemaInfer = z.infer<typeof WorkspaceSchema>;
+export type MemType = z.infer<typeof MemberSchema>;
+export type WorkspaceSchemaInfer = z.infer<typeof WorkspaceSchema>;
 
-export default function WorkspaceForm() {
+export default function WorkspaceForm({ users }: { users: MemType[] }) {
+  const { toast } = useToast();
   const [open, setOpen] = useState(false);
-  const [lang, setLang] = useState(languages);
+  const [lang, setLang] = useState<MemType[]>([]);
+
   const form = useForm<WorkspaceSchemaInfer>({
     resolver: zodResolver(WorkspaceSchema),
     mode: "onBlur",
     defaultValues: {
-      title: "",
-      description: "",
-      members: [{ label: "German", value: "de" }],
+      name: "",
+      overview: "",
+      members: [],
     },
   });
 
@@ -59,27 +53,42 @@ export default function WorkspaceForm() {
     name: "members",
   });
 
-  function onSubmit(values: WorkspaceSchemaInfer) {
-    console.log(values);
-  }
+  const Onsubmit = async (data: WorkspaceSchemaInfer) => {
+    const res = await NewWorkspace(data);
+    // console.log(res);
+    if (res === undefined) {
+      toast({
+        variant: "default",
+        title: "Success",
+        description: "Created Workspace.",
+        className: "bg-secondary text-white border-secondary",
+      });
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Uh oh! Something went wrong.",
+        description: res.message,
+      });
+    }
+  };
 
   const searchMembers = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     const search = e.target.value.trim();
     if (search) {
-      setLang(languages.filter((l) => l.value.toLowerCase().match(search) || l.label.toLowerCase().match(search)));
+      setLang(users.filter((l) => l.value.email.toLowerCase().match(search) || l.label.toLowerCase().match(search)));
       setOpen(true);
     } else {
-      setLang([...languages]);
+      setLang([...users]);
       setOpen(false);
     }
   }, []);
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+      <form onSubmit={form.handleSubmit(Onsubmit)} className="space-y-5">
         <FormField
           control={form.control}
-          name="title"
+          name="name"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Title</FormLabel>
@@ -92,7 +101,7 @@ export default function WorkspaceForm() {
         />
         <FormField
           control={form.control}
-          name="description"
+          name="overview"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Description</FormLabel>
@@ -135,12 +144,12 @@ export default function WorkspaceForm() {
                           <CommandList>
                             <CommandGroup className="max-h-52 overflow-auto">
                               {lang.map((language, idx) => {
-                                const currIdx = field.value.findIndex((f) => f.value === language.value);
+                                const currIdx = field.value.findIndex((f) => f.value.id === language.value.id);
                                 const selected = currIdx === -1 ? false : true;
                                 return (
                                   <CommandItem
                                     value={language.label}
-                                    key={language.value}
+                                    key={language.value.id}
                                     onMouseDown={(e) => {
                                       e.preventDefault();
                                       e.stopPropagation();

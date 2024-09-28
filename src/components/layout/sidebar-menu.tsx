@@ -6,11 +6,15 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
 import { ChevronLeft, ChevronRight, LogOut } from "lucide-react";
+import { LogoutUser } from "@/actions/auth";
 
 export function SidebarMenu() {
   const { activeMenu, open, toggle } = useContext(SideBarContext);
   const menu = SidebarMenuList[activeMenu];
   const pathname = usePathname();
+  const handleLogout = () => {
+    LogoutUser();
+  };
   return (
     <>
       <div className={`py-5 h-full relative overflow-y-auto overflow-x-hidden pr-7`}>
@@ -34,7 +38,7 @@ export function SidebarMenu() {
             })}
           </div>
           <div className="sticky bottom-0 flex flex-col">
-            <Button title="Logout" variant={"destructive"} className={cn("gap-2 p-2")}>
+            <Button title="Logout" onClick={handleLogout} variant={"destructive"} className={cn("gap-2 p-2")}>
               <span>
                 <LogOut size={24} />
               </span>

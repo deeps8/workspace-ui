@@ -21,10 +21,10 @@ export default function Page({ params }: { params: { workId: string } }) {
           <BreadcrumbComp crumbs={[...Crumbs, { href: "", label: params.workId }]} />
           <div className="grid grid-cols-10 gap-3">
             <div className="col-span-10 md:col-span-8 space-y-2 ">
-              <CardTitle>{TempWorkspace.title}</CardTitle>
+              <CardTitle>{TempWorkspace.name}</CardTitle>
               <div className="flex space-x-4 [&>*:not(:last-child)]:pr-4 text-sm [&>*:not(:last-child)]:border-r-2 border-muted-foreground">
                 <span>
-                  Created on - {new Date(TempWorkspace.createdAt).toLocaleDateString("en-US", { dateStyle: "medium" })}
+                  Created on - {new Date(TempWorkspace.created_at).toLocaleDateString("en-US", { dateStyle: "medium" })}
                 </span>
                 <div>
                   <MemberListDialog

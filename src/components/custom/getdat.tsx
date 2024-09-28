@@ -1,6 +1,6 @@
 "use client";
-// import { cookies } from "next/headers";
 import React from "react";
+import { useSession } from "../provider/session-provider";
 
 const getData = async () => {
   try {
@@ -8,10 +8,8 @@ const getData = async () => {
       credentials: "include",
       method: "GET",
     });
-    console.log({ res: await res.json() });
     return res.json();
   } catch (error) {
-    console.log({ error });
     return null;
   }
 };
@@ -21,10 +19,12 @@ function Getdat() {
     const data = await getData();
     console.log({ user: data });
   };
+  const sess = useSession();
   return (
     <div>
       <button onClick={handleClick}>Click</button>
-      {/* <pre>{JSON.stringify(data, null, 2)}</pre> */}
+      <h2>{sess.user.name}</h2>
+      <pre>{JSON.stringify(sess.user, null, 2)}</pre>
     </div>
   );
 }

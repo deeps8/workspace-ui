@@ -1,10 +1,10 @@
 "use client";
 
+import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Logo } from "@/components/ui/logo";
-import { Github } from "lucide-react";
-import * as React from "react";
+import Link from "next/link";
 
 export default function LoginPage() {
   return (
@@ -15,7 +15,10 @@ export default function LoginPage() {
             <Logo />
             <CardTitle>Login</CardTitle>
             <CardDescription>
-              Welcome to <span className="font-mono text-primary text-md underline">Workspace</span>
+              Welcome to{" "}
+              <Link href={"/"}>
+                <span className="font-mono text-secondary underline">Workspace</span>
+              </Link>
             </CardDescription>
           </CardHeader>
           <CardContent></CardContent>
@@ -26,8 +29,7 @@ export default function LoginPage() {
               method="get"
             >
               <Button type="submit" className="w-full">
-                <Github className="mr-2" />
-                Continue with Github
+                Continue with Google
               </Button>
             </form>
           </CardFooter>

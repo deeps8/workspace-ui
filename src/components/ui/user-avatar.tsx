@@ -5,11 +5,10 @@ import { cn } from "@/lib/utils";
 
 type UserAvatarType = {
   className: string;
-  user: UserType;
+  user: Omit<UserType, "created_at" | "updated_at">;
 };
 function UserAvatar(props: UserAvatarType) {
   const { className, user } = props;
-  const joinedDate = new Date(user.createdAt).toLocaleDateString("en-US", { dateStyle: "medium" });
   return (
     <div className="relative">
       <Avatar
@@ -18,7 +17,7 @@ function UserAvatar(props: UserAvatarType) {
           className
         )}
       >
-        <AvatarImage src={user.avatar} alt={user.name} />
+        <AvatarImage src={user.picture} alt={user.name} />
         <AvatarFallback>{user.name[0]}</AvatarFallback>
       </Avatar>
       <div className="shadow-md hidden -translate-x-[calc(50%-20px)] absolute top-full mt-2 z-20 p-4 rounded-lg min-w-52 text-primary bg-primary-foreground peer-hover:block">
@@ -26,14 +25,13 @@ function UserAvatar(props: UserAvatarType) {
         <div>
           <p className="font-medium inline">{user.name}</p>
           <p className="text-sm text-muted-foreground border-gray-400">{user.email}</p>
-          <p className="text-xs text-muted-foreground ">joined on {joinedDate}</p>
         </div>
       </div>
     </div>
   );
 }
 
-function UserAvatarList({ userList }: { userList: UserType[] }) {
+function UserAvatarList({ userList }: { userList: Omit<UserType, "created_at" | "updated_at">[] }) {
   return (
     <div className="flex relative w-full">
       {userList.map((u, idx) => {

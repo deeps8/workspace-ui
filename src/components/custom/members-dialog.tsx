@@ -20,7 +20,7 @@ export default function MemberListDialog({ members, ownerId, dialogTrigger }: Me
           {members.map((m) => (
             <div key={m.id} className="flex space-x-4 items-center">
               <Avatar className="bg-primary-foreground h-11 w-11">
-                <AvatarImage src={m.avatar} alt={m.name} />
+                <AvatarImage src={m.picture} alt={m.name} />
                 <AvatarFallback>{m.name[0]}</AvatarFallback>
               </Avatar>
               <div>

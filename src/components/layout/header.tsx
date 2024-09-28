@@ -1,7 +1,7 @@
 import Link from "next/link";
 import ThemeSwitcher from "./theme-switcher";
 import { Logo } from "../ui/logo";
-import { Button } from "../ui/button";
+import LoginBtn from "../custom/LoginBtn";
 
 /*
     Header content will be changed based on user logged-in or not 
@@ -21,9 +21,7 @@ export function Header() {
         </div>
       </div>
       <div className="flex flex-1 justify-end space-x-3">
-        <Link href={"/login"}>
-          <Button>Login</Button>
-        </Link>
+        <LoginBtn />
         <ThemeSwitcher />
       </div>
     </div>
