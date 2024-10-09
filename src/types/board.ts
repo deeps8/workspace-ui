@@ -1,14 +1,15 @@
 import invariant from "tiny-invariant";
 import type { CleanupFn } from "@atlaskit/pragmatic-drag-and-drop/types";
+import { UserType } from "./user";
 
 type BoardType = {
   id: string;
   name: string;
   type: string; // TODO: create type for it later on
-  sticker: string;
   slug: string;
-  createdAt: string;
-  updatedAt: string;
+  created_at: string;
+  updated_at: string;
+  data: any;
 };
 
 type Outcome =
@@ -62,37 +63,39 @@ export const DEMO_BOARD_DETAILS: BoardType[] = [
     id: "board-1",
     name: "Codenames TODO",
     slug: "codenames-todo",
-    sticker:
-      "https://img.freepik.com/premium-vector/kanban-board-abstract-concept-vector-illustration_107173-29478.jpg?w=900",
     type: "kanban",
-    createdAt: "2024-04-28T19:11:39.394Z",
-    updatedAt: "2024-04-28T19:11:39.394Z",
+    data: null,
+    created_at: "2024-04-28T19:11:39.394Z",
+    updated_at: "2024-04-28T19:11:39.394Z",
   },
   {
     id: "board-2",
     name: "Team manager",
     slug: "team-manager",
-    sticker:
-      "https://img.freepik.com/premium-vector/kanban-board-abstract-concept-vector-illustration_107173-29478.jpg?w=900",
     type: "flows",
-    createdAt: "2024-04-28T19:11:39.394Z",
-    updatedAt: "2024-04-28T19:11:39.394Z",
+    data: null,
+    created_at: "2024-04-28T19:11:39.394Z",
+    updated_at: "2024-04-28T19:11:39.394Z",
   },
   {
     id: "board-3",
     name: "Icebox board",
     slug: "icebox-board",
-    sticker: "https://cdn.pixabay.com/photo/2024/02/21/08/44/woman-8587090_1280.png",
     type: "kanban",
-    createdAt: "2024-04-28T19:11:39.394Z",
-    updatedAt: "2024-04-28T19:11:39.394Z",
+    data: null,
+    created_at: "2024-04-28T19:11:39.394Z",
+    updated_at: "2024-04-28T19:11:39.394Z",
   },
 ];
+
+type Priority = "high" | "low" | "medium";
 
 type CardType = {
   id: string;
   title: string;
   description: string;
+  priority: string;
+  creator: Omit<UserType, "created_at" | "updated_at">;
 };
 
 let cardTitleNo = 1;
@@ -104,6 +107,13 @@ function getCardDetails(amount: number): CardType[] {
       id: `card-id-${cardTitleNo}`,
       title: `card-${cardTitleNo}`,
       description: `description of the card ${cardTitleNo}`,
+      priority: "low",
+      creator: {
+        id: "abc",
+        email: "abc@mail.co",
+        name: "ABC",
+        picture: "",
+      },
     };
   });
 }

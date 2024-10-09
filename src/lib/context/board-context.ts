@@ -33,7 +33,7 @@ export type BoardContextValue = {
   }) => CleanupFn;
 
   instanceId: symbol;
-  addCard: (args: { cardTitle: string; columnId: string }) => void;
+  addCard: (args: { cd: Omit<CardType, "id" | "creator">; columnId: string }) => void;
   addColumn: (args: { columnTitle: string }) => void;
   data: BoardState;
 };

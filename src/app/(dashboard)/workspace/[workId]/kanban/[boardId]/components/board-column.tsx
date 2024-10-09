@@ -28,6 +28,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ColumnActionMenu } from "./board-action-menus";
+import { Dialog, DialogContent, DialogHeader, DialogTrigger } from "@/components/ui/dialog";
+import { DialogDescription } from "@radix-ui/react-dialog";
+import ColumnCardForm from "./column-card-form";
 
 type BoardProps = {
   children: ReactNode;
@@ -224,16 +227,24 @@ export const BoardColumn = memo(function BoardColumn({ column }: BoardColumnProp
             </div>
           </div>
           <div className="px-2 py-2 border-t">
-            <Button
-              onClick={() => {
-                addCard({ cardTitle: "New card", columnId: columnId });
-                if (!scrollableRef.current) return;
-              }}
-              className="p-1 h-auto w-full text-sm"
-              variant={"ghost"}
-            >
-              Add Card
-            </Button>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button className="p-1 h-auto w-full text-sm" variant={"ghost"}>
+                  Add Card
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="inline-flex flex-col max-w-lg w-4/5 sm:max-w-lg rounded-lg overflow-auto max-h-[80%] p-0 gap-0">
+                <DialogHeader className="text-lg px-6 py-5 border-b border-input sticky top-0">
+                  Create New Board
+                </DialogHeader>
+                <ColumnCardForm
+                  addCard={addCard}
+                  columnId={columnId}
+                  scrollableRef={scrollableRef}
+                  containerAttr={{ className: "px-6 py-5 space-y-5 overflow-auto flex-1" }}
+                />
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
         {state.type === "is-column-over" && state.closestEdge && <DropIndicator edge={state.closestEdge} gap="16px" />}

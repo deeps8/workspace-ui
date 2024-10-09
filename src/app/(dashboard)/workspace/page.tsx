@@ -26,9 +26,11 @@ export default async function Workspace() {
               </CardContent>
             </Card>
           </Link>
-          {spaces?.data?.map((w) => {
-            return <WorkspaceCard {...w} key={w.id} />;
-          })}
+          {spaces?.data
+            ?.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+            .map((w) => {
+              return <WorkspaceCard {...w} key={w.id} />;
+            })}
         </div>
       </section>
     </main>

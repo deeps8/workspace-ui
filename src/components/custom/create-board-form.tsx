@@ -1,6 +1,6 @@
 "use client";
 
-import { DetailedHTMLProps, HTMLAttributes } from "react";
+import { DetailedHTMLProps, HTMLAttributes, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "../ui/form";
 import { z } from "zod";
@@ -9,6 +9,8 @@ import { Kanban, Presentation, Workflow } from "lucide-react";
 import { Button } from "../ui/button";
 import { DialogClose } from "../ui/dialog";
 import { Input } from "../ui/input";
+import { NewBoard } from "@/actions/board";
+import { useToast } from "@/hooks/use-toast";
 
 const BoardTypeList = [
   { value: "kanban", icon: Kanban, label: "Kanban" },
@@ -21,19 +23,40 @@ const BoardSchema = z.object({
   type: z.string().min(1, { message: "required" }),
 });
 
-type BoardSchemaInfer = z.infer<typeof BoardSchema>;
+export type BoardSchemaInfer = z.infer<typeof BoardSchema>;
 type CreateBoardFormProps = {
   containerAttr?: DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement>;
+  spaceId: string;
 };
-export default function CreateBoardForm({ containerAttr }: CreateBoardFormProps) {
+export default function CreateBoardForm({ containerAttr, spaceId }: CreateBoardFormProps) {
+  const { toast } = useToast();
+  const closeBtn = useRef<HTMLButtonElement>(null);
   const form = useForm<BoardSchemaInfer>({
     resolver: zodResolver(BoardSchema),
     mode: "onBlur",
     defaultValues: { type: "kanban", name: "" },
   });
 
-  function onSubmit(values: BoardSchemaInfer) {
-    console.log(values);
+  async function onSubmit(values: BoardSchemaInfer) {
+    const res = await NewBoard({ ...values, space_id: spaceId });
+    console.log({ res });
+    if (res.ok) {
+      toast({
+        variant: "default",
+        title: "Success",
+        description: "Created Board.",
+        className: "bg-secondary text-white border-secondary",
+      });
+      form.reset();
+      closeBtn.current?.click();
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Uh oh! Something went wrong.",
+        description: res.message,
+      });
+    }
+    return;
   }
 
   return (
@@ -61,7 +84,7 @@ export default function CreateBoardForm({ containerAttr }: CreateBoardFormProps)
                         />
                         <label htmlFor="kanban">
                           <div className="board-type-tile">
-                            <bt.icon size={50} className="mx-auto" />
+                            <bt.icon size={50} strokeWidth={1} className="mx-auto" />
                             {bt.label}
                           </div>
                         </label>
@@ -88,11 +111,13 @@ export default function CreateBoardForm({ containerAttr }: CreateBoardFormProps)
           />
         </div>
         <div className="space-x-4 px-6 py-5 border-t">
-          <Button type="submit" disabled={!form.formState.isValid}>
-            Create
+          <Button type="submit" disabled={!form.formState.isValid || form.formState.isSubmitting}>
+            {!form.formState.isSubmitting ? "Create" : "Creating..."}
           </Button>
           <DialogClose asChild>
-            <Button variant={"outline"}>Cancel</Button>
+            <Button ref={closeBtn} variant={"outline"}>
+              Cancel
+            </Button>
           </DialogClose>
         </div>
       </form>

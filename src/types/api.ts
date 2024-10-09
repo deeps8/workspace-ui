@@ -1,7 +1,7 @@
 type APIresponse<T> = {
   message: string;
   ok: boolean;
-  data: T;
+  data: T | null;
 };
 
 export type { APIresponse };

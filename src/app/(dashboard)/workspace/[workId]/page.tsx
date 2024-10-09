@@ -1,3 +1,4 @@
+import { GetWorkspaceWbrd } from "@/actions/workspace";
 import CreateBoardForm from "@/components/custom/create-board-form";
 import MemberListDialog from "@/components/custom/members-dialog";
 import BoardCard from "@/components/layout/board-card";
@@ -13,7 +14,9 @@ import { Plus } from "lucide-react";
 const Crumbs: BreadcrumbType[] = [{ href: "/workspace", label: "Workspace" }];
 const TempWorkspace = DEMO_WORKSPACE_DATA[1];
 
-export default function Page({ params }: { params: { workId: string } }) {
+export default async function Page({ params }: { params: { workId: string } }) {
+  const { data, message } = await GetWorkspaceWbrd(params.workId ?? "");
+  if (!data) return <>{message}</>;
   return (
     <main className="py-4">
       <header>
@@ -21,21 +24,21 @@ export default function Page({ params }: { params: { workId: string } }) {
           <BreadcrumbComp crumbs={[...Crumbs, { href: "", label: params.workId }]} />
           <div className="grid grid-cols-10 gap-3">
             <div className="col-span-10 md:col-span-8 space-y-2 ">
-              <CardTitle>{TempWorkspace.name}</CardTitle>
+              <CardTitle>{data.name}</CardTitle>
               <div className="flex space-x-4 [&>*:not(:last-child)]:pr-4 text-sm [&>*:not(:last-child)]:border-r-2 border-muted-foreground">
                 <span>
-                  Created on - {new Date(TempWorkspace.created_at).toLocaleDateString("en-US", { dateStyle: "medium" })}
+                  Created on - {new Date(data.created_at).toLocaleDateString("en-US", { dateStyle: "medium" })}
                 </span>
                 <div>
-                  {/* <MemberListDialog
-                    members={TempWorkspace.members}
-                    ownerId={TempWorkspace.owner}
+                  <MemberListDialog
+                    members={[data.ownerdetails, ...data.members]}
+                    ownerId={data.owner}
                     dialogTrigger={
                       <button className="hover:text-secondary focus:text-secondary underline">
-                        {TempWorkspace.members.length} Members
+                        {data.members.length + 1} Members
                       </button>
                     }
-                  /> */}
+                  />
                 </div>
               </div>
             </div>
@@ -55,7 +58,10 @@ export default function Page({ params }: { params: { workId: string } }) {
                 <DialogHeader className="text-lg px-6 py-5 border-b border-input sticky top-0">
                   Create New Board
                 </DialogHeader>
-                <CreateBoardForm containerAttr={{ className: "px-6 py-5 space-y-5 overflow-auto flex-1" }} />
+                <CreateBoardForm
+                  spaceId={data.id}
+                  containerAttr={{ className: "px-6 py-5 space-y-5 overflow-auto flex-1" }}
+                />
               </DialogContent>
             </Dialog>
           </div>
@@ -78,9 +84,11 @@ export default function Page({ params }: { params: { workId: string } }) {
       </section>
       <section className="py-4">
         <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">
-          {DEMO_BOARD_DETAILS.map((b) => {
-            return <BoardCard board={b} key={b.id} workId={params.workId} />;
-          })}
+          {data?.boards
+            ?.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+            ?.map((b) => {
+              return <BoardCard board={b} key={b.id} workId={params.workId} />;
+            })}
         </div>
       </section>
     </main>

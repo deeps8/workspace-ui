@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import {
   BoardState,
   CardType,
@@ -26,16 +26,35 @@ import { DropTriggerFlash } from "@/components/custom/DropIndicator";
 import Board from "./board-column";
 import { slugifyTemp } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { SocketContext } from "./socket-container";
 
-function getBasicData() {
-  return { columnMap: DEMO_BOARD_DATA, orderedColumnIds: OrderedColumn };
-}
+const ColumnSchema = z.object({
+  name: z.string().min(1, { message: "required" }).max(20, { message: "Name should be less than 20 characters" }),
+});
+type ColumnSchemaInfer = z.infer<typeof ColumnSchema>;
 
 export default function BoardWrapper() {
-  const [data, setData] = useState<BoardState>(() => {
-    const base = getBasicData();
-    return { ...base, lastOperation: null };
+  const form = useForm<ColumnSchemaInfer>({
+    resolver: zodResolver(ColumnSchema),
+    mode: "onBlur",
+    defaultValues: { name: "" },
   });
+  const clsBtn = useRef<HTMLButtonElement>(null);
+  const { data, setData, ws } = useContext(SocketContext);
 
   const stableData = useRef(data);
   useEffect(() => {
@@ -143,29 +162,29 @@ export default function BoardWrapper() {
       finishIndex: number;
       trigger?: Trigger;
     }) => {
-      setData((data) => {
-        const outcome: Outcome = {
-          type: "column-reorder",
-          columnId: data.orderedColumnIds[startIndex],
-          startIndex,
-          finishIndex,
-        };
-        const orderedColumnIds = reorder({
-          list: data.orderedColumnIds,
-          startIndex,
-          finishIndex,
-        });
-        return {
-          ...data,
-          orderedColumnIds: orderedColumnIds,
-          lastOperation: {
-            outcome,
-            trigger: trigger,
-          },
-        };
+      const outcome: Outcome = {
+        type: "column-reorder",
+        columnId: data.orderedColumnIds[startIndex],
+        startIndex,
+        finishIndex,
+      };
+      const orderedColumnIds = reorder({
+        list: data.orderedColumnIds,
+        startIndex,
+        finishIndex,
       });
+      const d = {
+        ...data,
+        orderedColumnIds: orderedColumnIds,
+        lastOperation: {
+          outcome,
+          trigger: trigger,
+        },
+      };
+      setData({ ...d });
+      if (ws && ws.current && ws.current.readyState === ws.current.OPEN) ws.current.send(JSON.stringify(d));
     },
-    []
+    [data, setData, ws]
   );
 
   const reorderCard = useCallback(
@@ -180,39 +199,39 @@ export default function BoardWrapper() {
       finishIndex: number;
       trigger?: Trigger;
     }) => {
-      setData((data) => {
-        const sourceColumn = data.columnMap[columnId];
-        const updatedItems = reorder({
-          list: sourceColumn.items,
-          startIndex,
-          finishIndex,
-        });
-
-        const updatedSourceColumn: ColumnType = {
-          ...sourceColumn,
-          items: updatedItems,
-        };
-
-        const updatedMap: ColumnMap = {
-          ...data.columnMap,
-          [columnId]: updatedSourceColumn,
-        };
-
-        const outcome: Outcome | null = {
-          type: "card-reorder",
-          columnId,
-          startIndex,
-          finishIndex,
-        };
-
-        return {
-          ...data,
-          columnMap: updatedMap,
-          lastOperation: { trigger, outcome },
-        };
+      const sourceColumn = data.columnMap[columnId];
+      const updatedItems = reorder({
+        list: sourceColumn.items,
+        startIndex,
+        finishIndex,
       });
+
+      const updatedSourceColumn: ColumnType = {
+        ...sourceColumn,
+        items: updatedItems,
+      };
+
+      const updatedMap: ColumnMap = {
+        ...data.columnMap,
+        [columnId]: updatedSourceColumn,
+      };
+
+      const outcome: Outcome | null = {
+        type: "card-reorder",
+        columnId,
+        startIndex,
+        finishIndex,
+      };
+
+      const d = {
+        ...data,
+        columnMap: updatedMap,
+        lastOperation: { trigger, outcome },
+      };
+      setData({ ...d });
+      if (ws && ws.current && ws.current.readyState === ws.current.OPEN) ws.current.send(JSON.stringify(d));
     },
-    []
+    [data, setData, ws]
   );
 
   const moveCard = useCallback(
@@ -233,55 +252,64 @@ export default function BoardWrapper() {
       if (startColumnId === finishColumnId) {
         return;
       }
-      setData((data) => {
-        const sourceColumn = data.columnMap[startColumnId];
-        const destinationColumn = data.columnMap[finishColumnId];
-        const item: CardType = sourceColumn.items[itemIndexInStartColumn];
+      const sourceColumn = data.columnMap[startColumnId];
+      const destinationColumn = data.columnMap[finishColumnId];
+      const item: CardType = sourceColumn.items[itemIndexInStartColumn];
 
-        const destinationItems = Array.from(destinationColumn.items);
-        // Going into the first position if no index is provided
-        const newIndexInDestination = itemIndexInFinishColumn ?? 0;
-        destinationItems.splice(newIndexInDestination, 0, item);
+      const destinationItems = Array.from(destinationColumn.items);
+      // Going into the first position if no index is provided
+      const newIndexInDestination = itemIndexInFinishColumn ?? 0;
+      destinationItems.splice(newIndexInDestination, 0, item);
 
-        const updatedMap = {
-          ...data.columnMap,
-          [startColumnId]: {
-            ...sourceColumn,
-            items: sourceColumn.items.filter((i) => i.id !== item.id),
-          },
-          [finishColumnId]: {
-            ...destinationColumn,
-            items: destinationItems,
-          },
-        };
+      const updatedMap = {
+        ...data.columnMap,
+        [startColumnId]: {
+          ...sourceColumn,
+          items: sourceColumn.items.filter((i) => i.id !== item.id),
+        },
+        [finishColumnId]: {
+          ...destinationColumn,
+          items: destinationItems,
+        },
+      };
 
-        const outcome: Outcome | null = {
-          type: "card-move",
-          finishColumnId,
-          itemIndexInStartColumn,
-          itemIndexInFinishColumn: newIndexInDestination,
-        };
+      const outcome: Outcome | null = {
+        type: "card-move",
+        finishColumnId,
+        itemIndexInStartColumn,
+        itemIndexInFinishColumn: newIndexInDestination,
+      };
 
-        return {
-          ...data,
-          columnMap: updatedMap,
-          lastOperation: {
-            outcome,
-            trigger: trigger,
-          },
-        };
-      });
+      const d = {
+        ...data,
+        columnMap: updatedMap,
+        lastOperation: {
+          outcome,
+          trigger: trigger,
+        },
+      };
+      setData({ ...d });
+      if (ws && ws.current && ws.current.readyState === ws.current.OPEN) ws.current.send(JSON.stringify(d));
     },
-    []
+    [data, setData, ws]
   );
 
-  const addCard = useCallback(({ cardTitle, columnId }: { cardTitle: string; columnId: string }) => {
-    const newCard: CardType = {
-      title: cardTitle,
-      id: slugifyTemp(cardTitle),
-      description: "",
-    };
-    setData((data) => {
+  const addCard = useCallback(
+    ({ cd, columnId }: { cd: Omit<CardType, "id" | "creator">; columnId: string }) => {
+      // TODO: get loggedin user details and update the card details.
+      const newCard: CardType = {
+        title: cd.title,
+        id: slugifyTemp(cd.title),
+        description: cd.description,
+        priority: cd.priority,
+        creator: {
+          id: "",
+          email: "",
+          name: "",
+          picture: "",
+        },
+      };
+
       const sourceColumn = data.columnMap[columnId];
       const updatedMap = {
         ...data.columnMap,
@@ -291,7 +319,7 @@ export default function BoardWrapper() {
         },
       };
 
-      return {
+      const d = {
         ...data,
         columnMap: updatedMap,
         lastOperation: {
@@ -299,23 +327,29 @@ export default function BoardWrapper() {
           trigger: "keyboard",
         },
       };
-    });
-  }, []);
+      setData({ ...d } as BoardState);
+      if (ws && ws.current && ws.current.readyState === ws.current.OPEN) ws.current.send(JSON.stringify(d));
+    },
+    [data, setData, ws]
+  );
 
-  const addColumn = useCallback(({ columnTitle }: { columnTitle: string }) => {
-    const newCol: ColumnType = {
-      title: columnTitle,
-      columnId: slugifyTemp(columnTitle),
-      items: [],
-    };
-    setData((data) => {
-      return {
+  const addColumn = useCallback(
+    ({ columnTitle }: { columnTitle: string }) => {
+      const newCol: ColumnType = {
+        title: columnTitle,
+        columnId: slugifyTemp(columnTitle),
+        items: [],
+      };
+      const d = {
         ...data,
         columnMap: { ...data.columnMap, [newCol.columnId]: newCol },
         orderedColumnIds: data.orderedColumnIds.concat(newCol.columnId),
       };
-    });
-  }, []);
+      setData({ ...d });
+      if (ws && ws.current && ws.current.readyState === ws.current.OPEN) ws.current.send(JSON.stringify(d));
+    },
+    [data, setData, ws]
+  );
 
   const [instanceId] = useState(() => Symbol("instance-id"));
 
@@ -467,6 +501,12 @@ export default function BoardWrapper() {
     data,
   ]);
 
+  const onAddColSubmit = ({ name }: ColumnSchemaInfer) => {
+    addColumn({ columnTitle: name });
+    form.reset();
+    clsBtn.current?.click();
+  };
+
   return (
     <BoardContext.Provider value={contextValue}>
       <Board>
@@ -474,7 +514,42 @@ export default function BoardWrapper() {
           return <BoardColumn key={colId} column={data.columnMap[colId]} />;
         })}
         <div>
-          <Button onClick={() => addColumn({ columnTitle: "Temp Column" })}>Add new Column</Button>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button>Add new Column</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onAddColSubmit)} className="flex-1">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Column Name</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="enter name" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <DialogFooter>
+                    <div className="space-x-4 px-6 py-5">
+                      <Button type="submit" disabled={!form.formState.isValid || form.formState.isSubmitting}>
+                        {!form.formState.isSubmitting ? "Create" : "Creating..."}
+                      </Button>
+                      <DialogClose asChild>
+                        <Button ref={clsBtn} variant={"outline"}>
+                          Cancel
+                        </Button>
+                      </DialogClose>
+                    </div>
+                  </DialogFooter>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
         </div>
       </Board>
     </BoardContext.Provider>

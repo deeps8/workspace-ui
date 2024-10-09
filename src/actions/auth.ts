@@ -2,12 +2,13 @@
 import { SessionType } from "@/components/provider/session-provider";
 import { APIresponse } from "@/types/api";
 import { UserType } from "@/types/user";
+import { revalidateTag } from "next/cache";
 import { isRedirectError } from "next/dist/client/components/redirect";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 
-export const MySession = cache(async function (): Promise<SessionType | null> {
+export const MySession = async function (): Promise<SessionType | null> {
   const sessionId = cookies().get("session")?.value ?? null;
   if (!sessionId) {
     return null;
@@ -19,17 +20,19 @@ export const MySession = cache(async function (): Promise<SessionType | null> {
       headers: {
         Cookie: `session=${sessionId}`,
       },
+      next: { tags: ["session"] },
     });
 
     if (!res.ok) {
       return null;
     }
     const user: UserType = await res.json();
+    console.log({ user });
     return { user, session: true };
   } catch (error) {
     return null;
   }
-});
+};
 
 export const LogoutUser = async () => {
   try {
@@ -60,6 +63,7 @@ export async function GetAllUser(): Promise<APIresponse<UserType[]>> {
       },
     });
     if (res.status === 401) {
+      revalidateTag("session");
       return redirect("/login");
     }
     return res.json();

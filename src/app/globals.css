@@ -103,7 +103,7 @@ label {
 }
 .board-type-tile {
   text-align: center;
-  border: 2px solid hsl(var(--primary));
+  border: 1px solid hsl(var(--primary));
   aspect-ratio: 1;
   display: grid;
   place-content: center;

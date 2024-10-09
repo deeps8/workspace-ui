@@ -1,13 +1,15 @@
 import { Button } from "@/components/ui/button";
-import { UserAvatar } from "@/components/ui/user-avatar";
-import { DEMO_BOARD_DATA, DEMO_BOARD_DETAILS, OrderedColumn } from "@/types/board";
+import { DEMO_BOARD_DETAILS } from "@/types/board";
 import { Ellipsis, Filter, Star } from "lucide-react";
-import { BoardColumn } from "./components/board-column";
 import BoardWrapper from "./components/board";
+import SocketProvider from "./components/socket-container";
+import { StartSocket } from "@/actions/board";
 
 const boardDetails = DEMO_BOARD_DETAILS[0];
 
-export default function KanbanBoard({ params }: { params: { boardId: string; workId: string } }) {
+export default async function KanbanBoard({ params }: { params: { boardId: string; workId: string } }) {
+  console.log({ params });
+  // const ws = await StartSocket();
   return (
     <main className="relative min-h-[inherit]">
       <div className="flex flex-col absolute inset-0">
@@ -34,7 +36,9 @@ export default function KanbanBoard({ params }: { params: { boardId: string; wor
         </header>
         <div className="h-full relative">
           <section className="flex-1 py-2 absolute inset-0">
-            <BoardWrapper />
+            <SocketProvider boardid={params.boardId}>
+              <BoardWrapper />
+            </SocketProvider>
           </section>
         </div>
       </div>

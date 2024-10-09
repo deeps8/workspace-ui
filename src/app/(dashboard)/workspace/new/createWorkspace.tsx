@@ -176,8 +176,8 @@ export default function WorkspaceForm({ users }: { users: MemType[] }) {
           }}
         />
         <div className="space-x-4">
-          <Button type="submit" disabled={!form.formState.isValid}>
-            Create
+          <Button type="submit" disabled={!form.formState.isValid || form.formState.isSubmitting}>
+            {!form.formState.isSubmitting ? "Create" : "Creating..."}
           </Button>
           <Link href={"./"}>
             <Button variant={"outline"}>Cancel</Button>

@@ -5,7 +5,7 @@ import { Badge } from "../ui/badge";
 import React from "react";
 
 type MemberListDialogProps = {
-  members: UserType[];
+  members: Omit<UserType, "created_at" | "updated_at">[];
   ownerId: string;
   dialogTrigger: React.ReactNode;
 };

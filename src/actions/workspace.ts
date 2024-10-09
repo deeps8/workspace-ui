@@ -1,6 +1,7 @@
 "use server";
 import { WorkspaceSchemaInfer } from "@/app/(dashboard)/workspace/new/createWorkspace";
 import { APIresponse } from "@/types/api";
+import { BoardType } from "@/types/board";
 import { WorkspaceType } from "@/types/workspace";
 import { revalidateTag } from "next/cache";
 import { isRedirectError } from "next/dist/client/components/redirect";
@@ -20,6 +21,7 @@ export async function GetAllWorkspace(): Promise<APIresponse<WorkspaceType[]>> {
       },
     });
     if (res.status === 401) {
+      revalidateTag("session");
       return redirect("/login");
     }
     return res.json();
@@ -46,6 +48,7 @@ export async function NewWorkspace(data: WorkspaceSchemaInfer) {
       }),
     });
     if (res.status === 401) {
+      revalidateTag("session");
       return redirect("/login");
     }
     revalidateTag("spaces");
@@ -56,5 +59,29 @@ export async function NewWorkspace(data: WorkspaceSchemaInfer) {
   } catch (error) {
     if (isRedirectError(error)) throw error;
     return { message: error as string, ok: false, data: [] };
+  }
+}
+
+export async function GetWorkspaceWbrd(name: string): Promise<APIresponse<WorkspaceType & { boards: BoardType[] }>> {
+  try {
+    const sessionId = cookies().get("session")?.value ?? "";
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_PATH}/api/workspace?slug=${name}`, {
+      credentials: "include",
+      method: "GET",
+      cache: "force-cache",
+      next: { tags: ["spaces"] },
+      headers: {
+        Cookie: `session=${sessionId}`,
+      },
+    });
+    if (res.status === 401) {
+      console.log("User not authorized");
+      revalidateTag("session");
+      return redirect("/login");
+    }
+    return res.json();
+  } catch (error) {
+    if (isRedirectError(error)) throw error;
+    return { message: "Something went wrong", ok: false, data: null };
   }
 }
