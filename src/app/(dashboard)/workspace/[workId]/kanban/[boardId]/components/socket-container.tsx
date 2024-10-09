@@ -38,7 +38,7 @@ const SocketProvider: React.FC<SocketProviderType> = ({ children, boardid }) => 
     if (ws.current && ws.current.readyState === ws.current.OPEN) return;
     if (window && window["WebSocket"]) {
       const url = new URL(process.env.NEXT_PUBLIC_API_BASE_PATH || "");
-      ws.current = new WebSocket(`ws://${url.host}/api/ws?roomid=${boardid}&userid=${sess?.user.id ?? ""}`);
+      ws.current = new WebSocket(`wss://${url.host}/api/ws?roomid=${boardid}&userid=${sess?.user.id ?? ""}`);
       ws.current.onopen = function (e) {
         console.log("Connection Opened");
       };
