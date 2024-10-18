@@ -56,8 +56,10 @@ const SocketProvider: React.FC<SocketProviderType> = ({ children, boardid }) => 
           if (res.type !== "msg") return;
           // send by me, do not update the state.
           // if (res.clientID === sess?.user.id) return;
-          const brdData = JSON.parse(res.text) as BoardState;
-          setData({ ...brdData });
+          if (res.text && res.text !== "{}") {
+            const brdData = JSON.parse(res.text) as BoardState;
+            setData({ ...brdData });
+          }
         } catch (error) {
           console.log(error);
         }
